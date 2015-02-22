@@ -513,7 +513,7 @@ proc display {f2disp} {
       set oy 0
     }
     set bmp [file join [file dirname $f2disp] background.$bgimagetype]
-    puts stderr "convert -crop ${sw}x${sh}+$ox+$oy \\\n$f2disp $bmp"
+#    puts stderr "convert -crop ${sw}x${sh}+$ox+$oy \\\n$f2disp $bmp"
     if [catch {exec convert -crop ${sw}x${sh}+$ox+$oy $f2disp $bmp >> /tmp/x3arth.log} err] {
       puts stderr $err
     }
