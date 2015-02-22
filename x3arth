@@ -179,8 +179,6 @@ proc latest {u first} {
 
 proc http_latest {u first} {
   global token0 token path page prevfile updaTIME
-  puts stdout [info exists page]
-  puts stdout {yp}
   if {![info exists page]} {
     if {([file exists /tmp/${path}index.html] && ([expr [clock seconds]-[file mtime /tmp/${path}index.html]]>$updaTIME)) || (![file exists /tmp/${path}index.html])} { 
       puts stderr "Getting file list"
@@ -221,7 +219,8 @@ proc http_latest {u first} {
       }
     }
   } else {
-    regexp -all -nocase {<A HREF="([0-8][0-9]+\.[^\.]{3})">([0-8][0-9]+\.[^\.]{3})</A>} $page {} f0 f1
+#    puts stdout $page
+    regexp -all -nocase {<A HREF="([0-9]{10}.{6}\.[^\.]{3})">([0-9]{10}.{6}\.[^\.]{3})</A>} $page {} f0 f1
   }
   
   if {[info exists prevfile($f0)]} {
@@ -518,14 +517,15 @@ proc display {f2disp} {
     if [catch {exec convert -crop ${sw}x${sh}+$ox+$oy $f2disp $bmp >> /tmp/x3arth.log} err] {
       puts stderr $err
     }
-    sample_colorize ${prefs_dir}/sample.bmp $bmp $bmp.new.$bgimagetype
-    if [catch {exec mv $bmp.new.$bgimagetype $bmp} err] {
+    set image_colorized [file rootname $bmp].new.$bgimagetype
+    sample_colorize ${prefs_dir}/sample.bmp $bmp [file rootname $bmp].new.$bgimagetype
+    if [catch {exec mv $image_colorized $bmp} err] {
       puts stderr $err
     }
     set f2disp $bmp
   }
-  exec mv $f2disp [file rootname $f2disp].currentbg.[pid].$bgimagetype
-  set f2disp [file rootname $f2disp].currentbg.[pid].$bgimagetype
+  exec mv $f2disp [file rootname $f2disp].[pid].$bgimagetype
+  set f2disp [file rootname $f2disp].[pid].$bgimagetype
   xsetroot $f2disp
 }
 
@@ -537,17 +537,15 @@ proc xsetroot {f2disp} {
       exec gconftool-2 --type string --set /desktop/gnome/background/picture_options spanned
       exec gconftool-2 --type string --set /desktop/gnome/background/picture_filename "" 
       exec gconftool-2 --type string --set /desktop/gnome/background/picture_filename $f2disp
-      exit 1
     }
     {dconf} {
-      puts stdout dconf
+#      puts stdout dconf
       exec echo dconf write /org/gnome/desktop/background/picture-uri \"\'file://$f2disp\'\" > /tmp/x3arth.sh
       exec echo dconf write /org/gnome/desktop/background/picture-options \"\'spanned\'\"  >> /tmp/x3arth.sh
       if [catch { exec /tmp/x3arth.sh } err ] {
         puts stderr $err
         exit 1
       }
-      exit 1
     }
     {gsettings} {
       exec echo gsettings set org.gnome.desktop.background picture-uri \"\'file://$f2disp\'\" > /tmp/x3arth.sh
@@ -603,9 +601,8 @@ proc sample_colorize {sample image outfile} {
     puts stderr $err
     exit 1
   }
-  puts stdout {exec chmod +x /tmp/x3arth.sh}
   exec chmod +x /tmp/x3arth.sh
-  puts stdout [exec cat /tmp/x3arth.sh]
+#  puts stdout [exec cat /tmp/x3arth.sh]
   if [catch {exec /tmp/x3arth.sh} err] {
     puts stderr $err
     exit 1
@@ -829,12 +826,11 @@ set NASA [string trimright $NASA /]
 if {$argc<2} {
   getlatest
   if {$all} {
-    display $f2disp
+#    display $f2disp
     while {$token=={}} {
       getlatest
-      display $f2disp
+#      display $f2disp
     }
-    exit 0
   }
   if {[llength $gotit]} {
     set token {}
@@ -857,7 +853,7 @@ if {[file exists $f2disp]} {
   }
 }
 
-puts stdout "token:{$token}"
+#puts stdout "token:{$token}"
 
 if {[regexp -nocase {http://[^/]+} $NASA home]} {
   catch {set f [open /tmp/x3arth.url r]}
