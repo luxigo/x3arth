@@ -1,8 +1,8 @@
 #!/bin/sh
 #\
-(kill -0 `cat /var/run/x3arth.pid`) 1> /dev/null 2> /dev/null && exit 0
+(kill -0 `cat ~/.x3arth/x3arth.pid`) 1> /dev/null 2> /dev/null && exit 0
 #\
-echo $$ > /tmp/x3arth.pid
+echo $$ > ~/.x3arth/x3arth.pid
 #\
 export PATH=/usr/X11R6/bin:/usr/bin:/usr/local/bin:$PATH
 # the next line restarts using tclsh \
@@ -11,7 +11,7 @@ exec tclsh "$0" "$@"
  #
  # x3arth - display the latest earth/sun satellite images on your desktop
  #
- # Copyright (c) 1998-2015 Luc Deschenaux <luc@miprosoft.com>
+ # Copyright (c) 1999-2015 Luc Deschenaux <luc@miprosoft.com>
  #
  # This program is free software: you can redistribute it and/or modify
  # it under the terms of the GNU Affero General Public License as published by
@@ -34,7 +34,7 @@ exec tclsh "$0" "$@"
  #
 
 
-set _Trace_fd [open "/tmp/tcltrace.tmp" w]
+#set _Trace_fd [open "${prefs_dir}/tcltrace.tmp" w]
 
 # fconfigure $_Trace_fd -buffering line
 
@@ -178,11 +178,11 @@ proc latest {u first} {
 }
 
 proc http_latest {u first} {
-  global token0 token path page prevfile updaTIME
+  global token0 token path page prevfile updaTIME prefs_dir
   if {![info exists page]} {
-    if {([file exists /tmp/${path}index.html] && ([expr [clock seconds]-[file mtime /tmp/${path}index.html]]>$updaTIME)) || (![file exists /tmp/${path}index.html])} { 
+    if {([file exists ${prefs_dir}/${path}index.html] && ([expr [clock seconds]-[file mtime ${prefs_dir}/${path}index.html]]>$updaTIME)) || (![file exists ${prefs_dir}/${path}index.html])} { 
       puts stderr "Getting file list"
-      set token0 [http_copy $u /tmp/temp.html 0]
+      set token0 [http_copy $u ${prefs_dir}/temp.html 0]
       if {$token0=={}} {
         puts stderr "Cant reach website."
         set token previous
@@ -194,10 +194,10 @@ proc http_latest {u first} {
         set token previous
         return {}
       }
-      file mkdir /tmp/$path
-      file copy -force -- /tmp/temp.html /tmp/${path}index.html
+      file mkdir ${prefs_dir}/$path
+      file copy -force -- ${prefs_dir}/temp.html ${prefs_dir}/${path}index.html
     }
-    set f [open /tmp/${path}index.html r]
+    set f [open ${prefs_dir}/${path}index.html r]
     set page [read $f]
     close $f
   }
@@ -236,11 +236,11 @@ proc http_latest {u first} {
 }
 
 proc ftp_latest {u first} {
-  global token path ftpsock names prevfile updaTIME
+  global token path ftpsock names prevfile updaTIME prefs_dir
   
   if {![info exists names]} {
-    if {([file exists /tmp/${path}ftpindex.txt]) && ([expr [clock seconds]-[file mtime /tmp/${path}ftpindex.txt]]<$updaTIME)} {
-      set f [open /tmp/${path}ftpindex.txt r]
+    if {([file exists ${prefs_dir}/${path}ftpindex.txt]) && ([expr [clock seconds]-[file mtime ${prefs_dir}/${path}ftpindex.txt]]<$updaTIME)} {
+      set f [open ${prefs_dir}/${path}ftpindex.txt r]
       set names [read $f]
       close $f
     } else {
@@ -255,13 +255,13 @@ proc ftp_latest {u first} {
         set token previous
         return {} 
       }
-      set f [open /tmp/${path}ftpindex.txt w]
+      set f [open ${prefs_dir}/${path}ftpindex.txt w]
       puts -nonewline $f $names
       close $f
     }
   }
   
-  file mkdir /tmp/$path
+  file mkdir ${prefs_dir}/$path
   set f0 {}
   foreach fn $names {
     if {[regexp -- {^[0-8][0-9]+\.[^\.]{3}$} $fn f1]} {
@@ -418,7 +418,7 @@ proc progress {size lsize ttime bytes} {
 }
 
 proc getlatest {} {
-  global token NASA path f2disp ftpsock url2c lsize size ttime all gotit prevfile sat
+  global token NASA path f2disp ftpsock url2c lsize size ttime all gotit prevfile sat prefs_dir
   set token {}
   http::config -useragent x3arth
   set url2c [latest $NASA/$path $all]
@@ -430,7 +430,7 @@ proc getlatest {} {
   }
   if {$fname!={}} {
     puts stderr $url2c
-    set lname /tmp/$path$fname
+    set lname ${prefs_dir}/$path$fname
     set ext [file extension $url2c]
       regexp -- {[^:]+} $url2c prot
       set prot [string tolower $prot]
@@ -440,13 +440,13 @@ proc getlatest {} {
           if {$token!=""} { 
             upvar #0 $token state
             if {([expr [lindex $state(http) 1]/100]==2) && ((![info exists size]) || ([file size $lname]>=$size))} {
-              cd /tmp/$path
-              catch {exec rm /tmp/$path$previous$ext}
-              catch {exec mv /tmp/${path}latest$ext /tmp/${path}previous$ext}
-              catch {exec ln -s $fname /tmp/${path}latest$ext}
+              cd ${prefs_dir}/$path
+              catch {exec rm ${prefs_dir}/$path$previous$ext}
+              catch {exec mv ${prefs_dir}/${path}latest$ext ${prefs_dir}/${path}previous$ext}
+              catch {exec ln -s $fname ${prefs_dir}/${path}latest$ext}
               set prevfile($fname) 1
-              exec echo $fname >> /tmp/${path}.prevfiles
-              lappend gotit /tmp/$path$fname
+              exec echo $fname >> ${prefs_dir}/${path}.prevfiles
+              lappend gotit ${prefs_dir}/$path$fname
               set f2disp $lname
               set token {}
             } else {puts stderr "Cant get the latest image." ; set token previous}
@@ -469,7 +469,7 @@ proc getlatest {} {
                 puts stderr "File already here: $fname" 
                 set token previous
                 set prevfile($fname) 1
-                exec echo $fname >> /tmp/${path}.prevfiles
+                exec echo $fname >> ${prefs_dir}/${path}.prevfiles
                 return
               }
             }
@@ -480,12 +480,12 @@ proc getlatest {} {
               set token previous
             } else {
               puts stderr {}
-              catch {exec rm /tmp/$path$previous$ext}
-              catch {exec mv /tmp/${path}latest$ext /tmp/${path}previous$ext}
-              catch {exec ln -s $fname /tmp/${path}latest$ext}
+              catch {exec rm ${prefs_dir}/$path$previous$ext}
+              catch {exec mv ${prefs_dir}/${path}latest$ext ${prefs_dir}/${path}previous$ext}
+              catch {exec ln -s $fname ${prefs_dir}/${path}latest$ext}
               set prevfile($fname) 1
-              exec echo $fname >> /tmp/${path}.prevfiles
-              lappend gotit /tmp/$path$fname
+              exec echo $fname >> ${prefs_dir}/${path}.prevfiles
+              lappend gotit ${prefs_dir}/$path$fname
               set f2disp $lname
               set token {}
             }
@@ -514,7 +514,7 @@ proc display {f2disp} {
     }
     set bmp [file join [file dirname $f2disp] background.$bgimagetype]
 #    puts stderr "convert -crop ${sw}x${sh}+$ox+$oy \\\n$f2disp $bmp"
-    if [catch {exec convert -crop ${sw}x${sh}+$ox+$oy $f2disp $bmp >> /tmp/x3arth.log} err] {
+    if [catch {exec convert -crop ${sw}x${sh}+$ox+$oy $f2disp $bmp >> ${prefs_dir}/x3arth.log} err] {
       puts stderr $err
     }
     set image_colorized [file rootname $bmp].new.$bgimagetype
@@ -530,7 +530,7 @@ proc display {f2disp} {
 }
 
 proc xsetroot {f2disp} {
-  global xpid chgbgmethod
+  global xpid chgbgmethod prefs_dir
 
   switch -- $chgbgmethod {
     {gconftool2} {
@@ -540,48 +540,48 @@ proc xsetroot {f2disp} {
     }
     {dconf} {
 #      puts stdout dconf
-      exec echo dconf write /org/gnome/desktop/background/picture-uri \"\'file://$f2disp\'\" > /tmp/x3arth.sh
-      exec echo dconf write /org/gnome/desktop/background/picture-options \"\'spanned\'\"  >> /tmp/x3arth.sh
-      if [catch { exec /tmp/x3arth.sh } err ] {
+      exec echo dconf write /org/gnome/desktop/background/picture-uri \"\'file://$f2disp\'\" > ${prefs_dir}/x3arth.sh
+      exec echo dconf write /org/gnome/desktop/background/picture-options \"\'spanned\'\"  >> ${prefs_dir}/x3arth.sh
+      if [catch { exec ${prefs_dir}/x3arth.sh } err ] {
         puts stderr $err
         exit 1
       }
     }
     {gsettings} {
-      exec echo gsettings set org.gnome.desktop.background picture-uri \"\'file://$f2disp\'\" > /tmp/x3arth.sh
-      exec echo gsettings set org.gnome.desktop.background picture-options \"\'spanned\'\" >> /tmp/x3arth.sh
-      if [catch { exec /tmp/x3arth.sh } err ] {
+      exec echo gsettings set org.gnome.desktop.background picture-uri \"\'file://$f2disp\'\" > ${prefs_dir}/x3arth.sh
+      exec echo gsettings set org.gnome.desktop.background picture-options \"\'spanned\'\" >> ${prefs_dir}/x3arth.sh
+      if [catch { exec ${prefs_dir}/x3arth.sh } err ] {
         puts stderr $err
         exit 1
       }
     }
   }
 
-#  exec echo gconftool-2 --type string --set /desktop/gnome/background/picture_options centered >> /tmp/x3arth.sh
-#  exec echo gconftool-2 --type string --set /desktop/gnome/background/picture_filename $f2disp >> /tmp/x3arth.sh
-#  exec echo xsetroot -solid black >> /tmp/x3arth.sh
+#  exec echo gconftool-2 --type string --set /desktop/gnome/background/picture_options centered >> ${prefs_dir}/x3arth.sh
+#  exec echo gconftool-2 --type string --set /desktop/gnome/background/picture_filename $f2disp >> ${prefs_dir}/x3arth.sh
+#  exec echo xsetroot -solid black >> ${prefs_dir}/x3arth.sh
  # puts stderr [set c "wmsetbg $f2disp && exit 0"]
-#  exec echo $c >> /tmp/x3arth.sh
+#  exec echo $c >> ${prefs_dir}/x3arth.sh
 # what would we do without xv ? :)
 #  puts stderr "xv $f2disp -quit -iconic -rmode 5 -viewonly"
-#  exec echo xv $f2disp -quit -iconic -rmode 5 -viewonly >> /tmp/x3arth.sh
-#  exec chmod +x /tmp/x3arth.sh
+#  exec echo xv $f2disp -quit -iconic -rmode 5 -viewonly >> ${prefs_dir}/x3arth.sh
+#  exec chmod +x ${prefs_dir}/x3arth.sh
 #  if {[info exists xpid]} {
 #    while {![catch {exec kill -0 $xpid}]} {
 #      after 150
 #    }
 #  }
-#  set xpid [exec /tmp/x3arth.sh &]
+#  set xpid [exec ${prefs_dir}/x3arth.sh &]
 
 }
 
 proc loadprevfile {path} {
-  global prevfile
+  global prevfile prefs_dir
   array unset prevfile
   array set prevfile {}
-  file mkdir /tmp/${path}
-  exec touch /tmp/${path}.prevfiles
-  set f [open /tmp/${path}.prevfiles r]
+  file mkdir ${prefs_dir}/${path}
+  exec touch ${prefs_dir}/${path}.prevfiles
+  set f [open ${prefs_dir}/${path}.prevfiles r]
   set prevfilelist [read -nonewline $f]
   close $f
   regsub -all -- {([^\n]+)(\n)?} $prevfilelist {set prevfile(\1) 1\2} prevfilelist
@@ -590,6 +590,7 @@ proc loadprevfile {path} {
 
 
 proc sample_colorize {sample image outfile} {
+  global prefs_dir
 
   exec cp $sample [file dirname $image]
   cd [file dirname $image]
@@ -597,13 +598,13 @@ proc sample_colorize {sample image outfile} {
   set image [file tail $image]
   set outfile [file tail $outfile]
   
-  if [catch {exec echo gimp -i -b \'(sample-colorize \"$sample\" \"$image\" \"$outfile\")\' > /tmp/x3arth.sh} err] {
+  if [catch {exec echo gimp -i -b \'(sample-colorize \"$sample\" \"$image\" \"$outfile\")\' > ${prefs_dir}/x3arth.sh} err] {
     puts stderr $err
     exit 1
   }
-  exec chmod +x /tmp/x3arth.sh
-#  puts stdout [exec cat /tmp/x3arth.sh]
-  if [catch {exec /tmp/x3arth.sh} err] {
+  exec chmod +x ${prefs_dir}/x3arth.sh
+#  puts stdout [exec cat ${prefs_dir}/x3arth.sh]
+  if [catch {exec ${prefs_dir}/x3arth.sh} err] {
     puts stderr $err
     exit 1
   }
@@ -657,11 +658,11 @@ if {$argc} {
 regexp {([^/]+)/([^/]+)/([^/]+)/([^/]+)/} $path {} sat typ chn res
 
 loadprevfile $path
-set f2disp [glob -nocomplain /tmp/${path}latest.???]
+set f2disp [glob -nocomplain ${prefs_dir}/${path}latest.???]
   
 if {[set p [lsearch $argv -b]]>=0} {
-  if {[file exists /tmp/${path}previous[file extension $f2disp]]} {
-    display /tmp/${path}previous[file extension $f2disp]
+  if {[file exists ${prefs_dir}/${path}previous[file extension $f2disp]]} {
+    display ${prefs_dir}/${path}previous[file extension $f2disp]
     exit 0
   }
   set argv [lreplace $argv $p $p]
@@ -681,13 +682,13 @@ if {[set p [lsearch $argv -s]]>=0} {
       puts stderr $usage
       exit 1
     }
-    if {[catch {exec cp /tmp/${path}background.$bgimagetype [lindex $argv 0]} err]} {
+    if {[catch {exec cp ${prefs_dir}/${path}background.$bgimagetype [lindex $argv 0]} err]} {
       puts stderr $err
       exit 1
     }
   } else {
-    file mkdir /tmp/${path}saved/
-    if {[catch {exec cp /tmp/${path}background.$bgimagetype /tmp/${path}saved/[clock format [clock seconds] -format %Y%m%d%H%M%S].$bgimagetype} err]} {
+    file mkdir ${prefs_dir}/${path}saved/
+    if {[catch {exec cp ${prefs_dir}/${path}background.$bgimagetype ${prefs_dir}/${path}saved/[clock format [clock seconds] -format %Y%m%d%H%M%S].$bgimagetype} err]} {
       puts stderr $err
       exit 1
     }
@@ -702,16 +703,16 @@ if {[set p [lsearch $argv -c]]>=0} {
       puts stderr $usage
       exit 1
     }
-    if {[file exists /tmp/${path}background.$bgimagetype]} {
-      if {[catch {exec cp /tmp/${path}background.$bgimagetype [lindex $argv 0]} err]} {
+    if {[file exists ${prefs_dir}/${path}background.$bgimagetype]} {
+      if {[catch {exec cp ${prefs_dir}/${path}background.$bgimagetype [lindex $argv 0]} err]} {
         puts stderr $err
         exit 1
       }
     }
     exit 0
   } else {
-    if {[file exists /tmp/${path}latest[file extension $f2disp]]} {
-      display /tmp/${path}latest[file extension $f2disp]
+    if {[file exists ${prefs_dir}/${path}latest[file extension $f2disp]]} {
+      display ${prefs_dir}/${path}latest[file extension $f2disp]
       exit 0
     } else {
       puts stdout {nothing to display}
@@ -757,7 +758,7 @@ if {$p>=0} {
     }
     set n [expr int(rand()*$l)]
     set ft [lindex $filelist $n]
-    set fn /tmp/$path$ft
+    set fn ${prefs_dir}/$path$ft
     if {(![discard $ft]) && ([file exists $fn])} {
       display $fn
       exit 0
@@ -856,18 +857,16 @@ if {[file exists $f2disp]} {
 #puts stdout "token:{$token}"
 
 if {[regexp -nocase {http://[^/]+} $NASA home]} {
-  catch {set f [open /tmp/x3arth.url r]}
-  if {(![file exists /tmp/x3arth.url]) || ([read $f]!=$home)} {
+  catch {set f [open ${prefs_dir}/x3arth.url r]}
+  if {(![file exists ${prefs_dir}/x3arth.url]) || ([read $f]!=$home)} {
      catch {close $f}
-    if {[catch {exec netscape $home &}]} {
-      if {[catch {exec mozilla $home &}]} {
+    if {[catch {exec xdg-open $home &}]} {
         puts stderr "Please visit $home"
-      }
     }
-    if {(![file exists /tmp/x3arth.url])} {
-      puts stdout "x3arth (C) 1999-2003 Luc Deschenaux <luc.deschenaux@freesurf.ch>"
+    if {(![file exists ${prefs_dir}/x3arth.url])} {
+      puts stdout "x3arth (C) 1999-2015 Luc Deschenaux <luc@miprosoft.ch>"
     }
-    set f [open /tmp/x3arth.url w]
+    set f [open ${prefs_dir}/x3arth.url w]
     puts -nonewline $f $home
   }
   close $f
