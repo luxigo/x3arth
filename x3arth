@@ -204,23 +204,24 @@ proc http_latest {u first} {
   if {$first} {
     set i 0
     while {1} {
-      if {![regexp -start $i -indices -nocase {<A HREF="([0-9]{10}.{6}\.[^\.]{3})">([0-9]{10}.{6}\.[^\.]{3})</A>} $page {} i0 i1]} {
+      if {![regexp -start $i -indices -nocase {<A HREF="([0-9]{10}.{6}\.tif)">([0-9]{10}.{6}\.tif)</A>} $page {} i0 i1]} {
         puts stderr {end of directory list}
         set token previous
         return {}
       }
       set i [lindex $i0 1]
       set f0 [string range $page [lindex $i0 0] $i]
+      puts stdout $f0
       if {[discard $f0]} {
         continue
       }
-      if {![info exists prevfile($f0)]} {
+      if {![info exists prevfile($f0)] && ![file exists ${prefs_dir}/$path/$f0]} {
         return $u$f0
       }
     }
   } else {
 #    puts stdout $page
-    regexp -all -nocase {<A HREF="([0-9]{10}.{6}\.[^\.]{3})">([0-9]{10}.{6}\.[^\.]{3})</A>} $page {} f0 f1
+    regexp -all -nocase {<A HREF="([0-9]{10}.{6}\.tif)">([0-9]{10}.{6}\.tif)</A>} $page {} f0 f1
   }
   
   if {[info exists prevfile($f0)]} {
@@ -266,12 +267,12 @@ proc ftp_latest {u first} {
   foreach fn $names {
     if {[regexp -- {^[0-8][0-9]+\.[^\.]{3}$} $fn f1]} {
       set f0 $f1
-      if {($first) && (![discard $f0]) && (![info exists prevfile($f0)])} {
+      if {($first) && (![discard $f0]) && (![info exists prevfile($f0)]) && (![file exists ${prefs_dir}/${path}/$f0])} {
         break
       }
     }
   }
-  if {[info exists prevfile($f0)]} {
+  if {[info exists prevfile($f0)] || [file exists ${prefs_dir}/${path}/$f0]} {
     set token notnew
     return {}
   }
@@ -499,30 +500,38 @@ proc display {f2disp} {
   global bgimagetype prefs_dir
   #set sw [winfo screenwidth .]
   #set sh [winfo screenheight .]
+  set cropped_image [file join [file dirname $f2disp] background.$bgimagetype]
   set desktop_res [split [exec xdpyinfo | grep dimens | awk {{print $2}}] {x}]
   set sw [lindex $desktop_res 0] 
   set sh [lindex $desktop_res 1]
   set desc [exec identify $f2disp]
   if {[regexp -- {([0-9]+)x([0-9]+)} $desc {} iw ih]} {
-    set ox [expr int(($iw-$sw)*rand())]
-    set oy [expr int(($ih-$sh)*rand())]
-    if {$ox<0} {
-      set ox 0
+
+    while {1} {
+      set ox [expr int(($iw-$sw)*rand())]
+      set oy [expr int(($ih-$sh)*rand())]
+      if {$ox<0} {
+        set ox 0
+      }
+      if {$oy<0} {
+        set oy 0
+      }
+  #    puts stderr "convert -crop ${sw}x${sh}+$ox+$oy \\\n$f2disp $cropped_image"
+      if [catch {exec convert -crop ${sw}x${sh}+$ox+$oy $f2disp $cropped_image >> ${prefs_dir}/x3arth.log} err] {
+        puts stderr $err
+      }
+
+      if {[file size $cropped_image] < 1048576 } continue;
+
+      set image_colorized [file rootname $cropped_image].new.$bgimagetype
+      sample_colorize ${prefs_dir}/sample.bmp $cropped_image [file rootname $cropped_image].new.$bgimagetype
+      if [catch {exec mv $image_colorized $cropped_image} err] {
+        puts stderr $err
+        exit 1
+      }
+      break
     }
-    if {$oy<0} {
-      set oy 0
-    }
-    set bmp [file join [file dirname $f2disp] background.$bgimagetype]
-#    puts stderr "convert -crop ${sw}x${sh}+$ox+$oy \\\n$f2disp $bmp"
-    if [catch {exec convert -crop ${sw}x${sh}+$ox+$oy $f2disp $bmp >> ${prefs_dir}/x3arth.log} err] {
-      puts stderr $err
-    }
-    set image_colorized [file rootname $bmp].new.$bgimagetype
-    sample_colorize ${prefs_dir}/sample.bmp $bmp [file rootname $bmp].new.$bgimagetype
-    if [catch {exec mv $image_colorized $bmp} err] {
-      puts stderr $err
-    }
-    set f2disp $bmp
+    set f2disp $cropped_image
   }
   exec mv $f2disp [file rootname $f2disp].[pid].$bgimagetype
   set f2disp [file rootname $f2disp].[pid].$bgimagetype
@@ -830,6 +839,7 @@ if {$argc<2} {
 #    display $f2disp
     while {$token=={}} {
       getlatest
+      puts stdout f2disp=$f2disp
 #      display $f2disp
     }
   }
