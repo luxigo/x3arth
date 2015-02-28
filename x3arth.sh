@@ -3,7 +3,8 @@
 set -x
 
 [ -z "$X3ARTH" ] && X3ARTH=$HOME/.x3arth
-[ -f "$X3ARTH/config" ] && . "$X3ARTH/config"
+CONFIG=$X3ARTH/config
+[ -f "$CONFIG" ] && . "$CONFIG"
 
 init() {
 
@@ -95,10 +96,21 @@ main() {
       find $DEST/$DEFAULTPATH -name \*.tif | shuf -n 1 > $TIFFNAME
 
     else
-      wget -N $URL/$DEFAULTPATH/ || exit 1
+
+      if [ -z "$PREVIOUS" ] ; then
+        wget -N $URL/$DEFAULTPATH/ || exit 1
+      fi
 
       sed -r -n -e 's/.* href="([0-9]{10}......\.tif)".*/\1/p' index.html | while read tiff ; do
         echo $tiff > $TIFFNAME
+        if [ -n "$PREVIOUS" ] ; then
+          if [[ "$BACKGROUNDIMAGE" != $(basename $tiff .tif)* ]] ; then
+            PREVIOUS=$tiff
+            continue
+          fi
+          echo $PREVIOUS > $TIFFNAME
+          break
+        fi
         grep $tiff .prevfiles && continue
         wget -c $URL/$DEFAULTPATH/$tiff || exit 1
         echo $tiff >> .prevfiles
@@ -114,8 +126,8 @@ main() {
 
   [ -z "$TIFF" ] && exit 1
 
-  cropped_image=background.$(date +%s).tiff
-  BACKGROUNDIMAGE=background.$(date +%s).png
+  cropped_image=$(basename $TIFF .tif).$(date +%s).tiff
+  BACKGROUNDIMAGE=$(basename $TIFF .tif).$(date +%s).png
 
   desktop_res=($(xdpyinfo | grep dimens | awk '{print $2}' | tr x ' '))
   sw=${desktop_res[0]}
@@ -156,7 +168,7 @@ main() {
 }
 
 saveprefs() {
-  cat << EOF > $X3ARTH/config
+  cat << EOF > $CONFIG
 OFFSETX=$OFFSETX
 OFFSETY=$OFFSETY
 NOCHANGE=$NOCHANGE
