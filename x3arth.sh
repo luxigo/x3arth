@@ -19,7 +19,7 @@ init() {
 
   while [ $# -gt 0 ] ; do
       case $1 in
-      -h|--help) usage $1 ;;
+      -h|--help) usage 0 ;;
       -a|--all) ALL=yes ;;
       -r|--random) RANDOMIMAGE=yes ;;
       -x|--offsetx)
@@ -126,7 +126,6 @@ main() {
 
   [ -z "$TIFF" ] && exit 1
 
-  cropped_image=$(basename $TIFF .tif).$(date +%s).tiff
   BACKGROUNDIMAGE=$(basename $TIFF .tif).$(date +%s).png
 
   desktop_res=($(xdpyinfo | grep dimens | awk '{print $2}' | tr x ' '))
@@ -148,18 +147,17 @@ main() {
   [ $ox -lt 0 ] && ox=0
   [ $oy -lt 0 ] && oy=0
 
-  convert -crop ${sw}x${sh}+$ox+$oy $TIFF $cropped_image || exit 1
+  convert -crop ${sw}x${sh}+$ox+$oy $TIFF $BACKGROUNDIMAGE || exit 1
 
-  #size=$(du -k $cropped_image | cut -f 1)
+  #size=$(du -k $BACKGROUNDIMAGE | cut -f 1)
 
   #[ $size -gt 1000 ] && break
 
 #  done
 
-  gimp -i -b "(sample-colorize \"$SAMPLE\" \"$cropped_image\" \"$BACKGROUNDIMAGE\")" -b "(gimp-quit 1)" || exit 1
+  gimp -i -b "(sample-colorize \"$SAMPLE\" \"$BACKGROUNDIMAGE\" \"$BACKGROUNDIMAGE\")" -b "(gimp-quit 1)" || exit 1
 
   saveprefs
-  rm $cropped_image
 
   dconf write /org/gnome/desktop/background/picture-uri "'file://$(pwd)/$BACKGROUNDIMAGE'" || exit 1
   dconf write /org/gnome/desktop/background/primary-color "'black'" || exit 1
