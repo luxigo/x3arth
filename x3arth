@@ -397,6 +397,10 @@ displaybg() {
   dconf write /org/gnome/desktop/background/picture-options "'spanned'" || exit 1
   dconf write /org/gnome/desktop/background/secondary-color "'#000000'" || exit 1
   grep -q $BACKGROUNDIMAGE $DEST/.prevbackground || echo $BACKGROUNDIMAGE >> $DEST/.prevbackground
+  message "The image was originally obtained via the NASA-Goddard Space Flight Center,"
+  message "Those images are in the public domain."
+  message "Permission is granted to use, duplicate, modify and redistribute images."
+  message "Please give credit to the NOAA-NASA GOES Project for the satellite images."
 }
 
 saveprefs() {
