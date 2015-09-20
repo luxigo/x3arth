@@ -2,6 +2,8 @@
 
 Bring the latest stunning and sexy earth and sun satellite images on your desktop
 
+# History
+
 Originally written in tcl in year 2000 for X11 (thus the x).
 
 Raw images were pretty sexy 15 years ago (they still are) and the name xearth was
