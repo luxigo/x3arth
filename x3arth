@@ -109,7 +109,7 @@ usage() {
 NAME
   x3arth - download, crop, colorize and set satellite images as wallpaper
 
-SYMOPSIS
+SYNOPSIS
   usage: x3arth [options] [<remote_path>]
 
 OPTIONS
@@ -152,7 +152,7 @@ EXAMPLES
 
         x3arth
 
-  - Reload image the same raw image, crop it at random offsets, colorize it,
+  - Reload the same raw image, crop it at random offsets, colorize it,
     and set it as wallpaper:
 
         x3arth --reload
@@ -167,8 +167,8 @@ EXAMPLES
 
         x3arth --reload --random --change
 
-  - Reload image and move left offset 500 pixels to the right
-    and top offset 500 pixels upward:
+  - Reload image and move top-left corner 500 pixels to the right
+    and 500 pixels to the top:
 
         x3arth --reload --offsetx +500 --offsety -500
 
