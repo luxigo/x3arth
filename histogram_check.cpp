@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
   }
 
   // count histogram bars per image quarter
-  int barCount[5]={};
+  int barCount[4]={};
   for(int c=0; c<values; ++c) {
     if (h[0][c]) ++barCount[0];
     if (h[1][c]) ++barCount[1];
