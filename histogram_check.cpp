@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     if (barCount[q]<threshold) --ok;
   }
 
-  printf("%s %d %d %d %d %s\n",filename,barCount[0],barCount[1],barCount[2],barCount[3],(ok?"ok":"bad"));
+  printf("%s %d %d %d %d %s\n",filename,barCount[0],barCount[1],barCount[2],barCount[3],(ok>=required?"ok":"bad"));
 
   // return null exit code if number of quarters with bar count above threshold meet requirements
   return ok < required;
