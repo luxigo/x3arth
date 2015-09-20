@@ -2,11 +2,12 @@
 
 Bring the latest stunning and sexy earth and sun satellite images on your desktop
 
-Originally written in tcl in year 2000 for X11 (thus the x). Raw images were
-pretty sexy 15 years ago (they still are, she is not very older) and xearth
-was already taken.  Thus the 3 x's.
+Originally written in tcl in year 2000 for X11 (thus the x).
 
-Then I had to rename it x3 because of internet censorship :-)
+Raw images were pretty sexy 15 years ago (they still are) and the name xearth was
+already taken.  Thus the 3 x's.
+
+Then I had to replace the 3 x's with "x3" because of internet censorship.
 
 
 # Copyright
