@@ -1,6 +1,7 @@
 #!/bin/bash
-if ! which gimp ; then
-  echo "error: install gimp first !"
+if ! which gimp > /dev/null 2>&1 ; then
+  echo "error: install gimp first !" >&2
+  exit 1
 fi
 
 version=($(gimp --version | awk '{print $NF}' | tr '.' ' '))
