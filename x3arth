@@ -145,6 +145,42 @@ MORE OPTIONS
 
   -u|--url <url>              Change the default url
 
+EXAMPLES
+
+  - Download the next raw image, crop it at random offsets, colorize it,
+    and set it as wallpaper:
+
+        x3arth
+
+  - Reload image the same raw image, crop it at random offsets, colorize it,
+    and set it as wallpaper:
+
+        x3arth --reload
+
+  - Reload a random local raw image, crop it at the same offsets,
+    and lock offsets for subsequent calls:
+
+        x3arth --reload --random --nochange 
+
+  - Reload a random local raw image, crop it at random offsets.
+    and unlock offsets for subsequent calls:
+
+        x3arth --reload --random --change
+
+  - Reload image and move left offset 500 pixels to the right
+    and top offset 500 pixels upward:
+
+        x3arth --reload --offsetx +500 --offsety -500
+
+  - Reload the previous wallpaper
+
+        x3arth --reload --previous
+
+  - Reload a random previous wallpaper:
+
+        x3arth --reload --previous --random
+
+
 EOF
 
   exit 1
@@ -281,12 +317,12 @@ main() {
   RETRY=10
   while true ; do
 
-    if [ "$CHANGE" != "no" -o -z "$OFFSETX" -o -z "$OFFSETY" -o -n "$offset_changed" ] ; then
+    if [ "$CHANGE" != "no" -o -z "$OFFSETX" -o -z "$OFFSETY" -o -n "$offset" -o -n "$offset_changed" ] ; then
       if [ -z "$offset" ] ; then
         OFFSETX=$(((iw-sw)*RANDOM/32767))
         OFFSETY=$(((ih-sh)*RANDOM/32767))
-        offset_changed=1
       fi
+      offset_changed=1
     fi
 
     ox=$OFFSETX
