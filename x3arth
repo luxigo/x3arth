@@ -346,6 +346,8 @@ main() {
 
       else
 
+        rm $BACKGROUNDIMAGE
+
         # avoid infinite loop
         if [ $((RETRY--)) -eq 0 ] ; then
           message "error: cannot find a nice tile to display, giving up"
