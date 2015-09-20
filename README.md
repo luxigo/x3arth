@@ -2,6 +2,13 @@
 
 Bring the latest stunning and sexy earth and sun satellite images on your desktop
 
+Originally written in tcl in year 2000 for X11 (thus the x). Raw images were
+pretty sexy 15 years ago (they still are, she is not very older) and xearth
+was already taken.  Thus the 3 x's.
+
+Then I had to rename it x3 because of internet censorship :-)
+
+
 # Copyright
 
 Copyright (C) 2015 Luc Deschenaux <luc.dechenaux@freesurf.ch>
@@ -36,13 +43,13 @@ Please give credit to the NOAA-NASA GOES Project for the satellite images.
 # Documentation
 
 ```
-## NAME
+NAME
   x3arth - download, crop, colorize and set satellite images as wallpaper
 
-## SYNOPSIS
+SYNOPSIS
   usage: x3arth [options] [<remote_path>]
 
-## OPTIONS
+OPTIONS
   Command line options:
 
   -h|--help
@@ -66,7 +73,7 @@ Please give credit to the NOAA-NASA GOES Project for the satellite images.
   -c|--change                 Randomize offsets
 
 
-## MORE OPTIONS
+MORE OPTIONS
   Other options:
 
   -s|--sample <gradient>      Specify gradient image for sample colorize
@@ -75,7 +82,7 @@ Please give credit to the NOAA-NASA GOES Project for the satellite images.
 
   -u|--url <url>              Change the default url
 
-## EXAMPLES
+EXAMPLES
 
   - Download the next raw image, crop it at random offsets, colorize it,
     and set it as wallpaper:
